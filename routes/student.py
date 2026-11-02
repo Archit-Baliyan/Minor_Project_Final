@@ -14,6 +14,11 @@ bp = Blueprint("student", __name__, url_prefix="/student")
 @role_required("student")
 def _student_only():
     """Every route in this blueprint is student-only."""
+    s = query("SELECT id FROM students WHERE id = %s", [session.get("profile_id")], one=True)
+    if not s:
+        session.clear()
+        flash("Session expired. Please log in again.", "warning")
+        return redirect(url_for("auth.login"))
 
 
 def me():

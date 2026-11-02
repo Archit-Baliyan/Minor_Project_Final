@@ -87,18 +87,24 @@ python -m unittest tests.test_app -v
 Tests use a separate database `smart_attendance_test`, so your real data is safe.
 
 ## Login credentials (LOCAL DEMO ONLY - change them for any real use)
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | `admin` | `admin123` |
-| Teacher 1 - Dr. Anita Sharma (PYT101, DBM102, WEB103) | `teacher1` | `teacher123` |
-| Teacher 2 - Prof. Vikram Malhotra (DSA104, MAT105) | `teacher2` | `teacher123` |
-| Students (20) | `MCA2601` ... `MCA2620` | `student123` |
+| Role | Username | Password | Subject Assigned |
+|------|----------|----------|------------------|
+| Admin | `admin` | `admin123` | All |
+| Teacher 1 - Shah Dhruv Samir | `teacher1` | `teacher123` | 25CAH-733 (Cloud Virtualization) |
+| Teacher 2 - Amandeep Kaur | `teacher2` | `teacher123` | 25CAP-732 (DevOps Lab) |
+| Teacher 3 - Danish Rashid Pala | `teacher3` | `teacher123` | 25CAT-731 (DevOps Theory) |
+| Teacher 4 - Manisha Nagpal | `teacher4` | `teacher123` | 25CAT-737 (Cloud Security) |
+| Teacher 5 - Ankur Sharma | `teacher5` | `teacher123` | 25TDT-711 (Aptitude) |
+| Teacher 6 - Sofia | `teacher6` | `teacher123` | 25CAH-734 (Docker) |
+| Teacher 7 - Ajay | `teacher7` | `teacher123` | 25TDP-710 (Soft Skills) |
+| Teacher 8 - Sanjeev Kumar | `teacher8` | `teacher123` | 25CAP-707 (Technical Training) |
+| Students (20) | `25MCC20073` ... `25MCC20088` | `student123` | All enrolled |
 
-Good students to demo: `MCA2611` (~97 %, no warning) and `MCA2613` (~55 %, low-attendance warning).
+Good students to demo: `25MCC20067` (Aryan Prajapati ~97 %, no warning) and `25MCC20081` (Pankaj Kumar ~55 %, low-attendance warning).
 
 ## Demo data (loaded by seed.sql)
-1 admin, 2 teachers, 20 students, 5 subjects, 2 classes (MCA Sem-1 A and B, 10 students each), about 3,360 attendance
-records (6 Jul - 23 Sep 2026) and 400 marks records. The dashboards are populated immediately.
+1 admin, 8 teachers, 20 students, 8 subjects, 2 classes (MCA Sem-1 A and B, 10 students each), about 3,600 attendance
+records (6 Jul - 23 Sep 2026) and 640 marks records. The dashboards are populated immediately.
 
 ## Project structure
 ```

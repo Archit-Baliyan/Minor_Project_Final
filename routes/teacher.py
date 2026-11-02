@@ -25,6 +25,11 @@ UPSERT_ATTENDANCE = """
 @role_required("teacher")
 def _teacher_only():
     """Every route in this blueprint is teacher-only."""
+    t = query("SELECT id FROM teachers WHERE id = %s", [session.get("profile_id")], one=True)
+    if not t:
+        session.clear()
+        flash("Session expired. Please log in again.", "warning")
+        return redirect(url_for("auth.login"))
 
 
 def teacher_id():

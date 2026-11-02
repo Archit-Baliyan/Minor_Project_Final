@@ -56,7 +56,7 @@ class TestAuthentication(BaseCase):
     def test_01_login_success_all_roles(self):
         for user, pw, target in [("admin", "admin123", "/admin/dashboard"),
                                  ("teacher1", "teacher123", "/teacher/dashboard"),
-                                 ("MCA2601", "student123", "/student/dashboard")]:
+                                 ("25MCC20073", "student123", "/student/dashboard")]:
             c = self.app.test_client()
             r = self.login(user, pw, c)
             self.assertEqual(r.status_code, 302, user)
@@ -78,7 +78,7 @@ class TestAuthentication(BaseCase):
         self.assertEqual(anon.status_code, 302)                       # not logged in -> login page
         self.assertIn("/login", anon.headers["Location"])
         student, teacher = self.app.test_client(), self.app.test_client()
-        self.login("MCA2601", "student123", student)
+        self.login("25MCC20073", "student123", student)
         self.login("teacher1", "teacher123", teacher)
         self.assertEqual(student.get("/admin/dashboard").status_code, 403)
         self.assertEqual(student.get("/teacher/attendance").status_code, 403)
@@ -117,7 +117,7 @@ class TestAdminModules(BaseCase):
         bad = self.client.post("/admin/students/add", data={"code": "X", "username": "", "name": "A",
                                "email": "not-an-email", "class_id": 1, "password": "123"}, follow_redirects=True)
         self.assertIn(b"valid email", bad.data)
-        dup = self.client.post("/admin/students/add", data={"code": "MCA2601", "username": "newuser", "name": "Dup Student",
+        dup = self.client.post("/admin/students/add", data={"code": "25MCC20073", "username": "newuser", "name": "Dup Student",
                                "email": "dup@example.com", "class_id": 1, "password": "secret123"}, follow_redirects=True)
         self.assertIn(b"already exists", dup.data)
 
@@ -128,10 +128,10 @@ class TestAdminModules(BaseCase):
         self.assertEqual(len(self.rows("SELECT * FROM subjects WHERE subject_code = 'NET106'")), 1)
 
     def test_13_delete_student_cascades(self):
-        sid = self.rows("SELECT id FROM students WHERE student_id = 'MCA2601'")[0]["id"]
+        sid = self.rows("SELECT id FROM students WHERE student_id = '25MCC20073'")[0]["id"]
         self.client.post(f"/admin/students/{sid}/delete")
         self.assertEqual(self.rows("SELECT COUNT(*) n FROM attendance WHERE student_id = %s", (sid,))[0]["n"], 0)
-        self.assertEqual(self.rows("SELECT COUNT(*) n FROM users WHERE username = 'MCA2601'")[0]["n"], 0)
+        self.assertEqual(self.rows("SELECT COUNT(*) n FROM users WHERE username = '25MCC20073'")[0]["n"], 0)
 
     def test_14_settings_change_threshold(self):
         self.client.post("/admin/settings", data={"min_attendance": "85"})
@@ -179,10 +179,10 @@ class TestAttendance(BaseCase):
 
     def test_24_teacher_cannot_mark_other_teachers_subject(self):
         form, _ = self.class1_status_form()
-        form["ts"] = 4                                                # DSA104 belongs to teacher2
+        form["ts"] = 2                                                # 25CAP-732 belongs to teacher2
         r = self.client.post("/teacher/attendance", data=form, follow_redirects=True)
         self.assertIn(b"select one of your subjects", r.data)
-        self.assertEqual(self.rows("SELECT COUNT(*) n FROM attendance WHERE subject_id = 4 AND attendance_date = %s",
+        self.assertEqual(self.rows("SELECT COUNT(*) n FROM attendance WHERE subject_id = 2 AND attendance_date = %s",
                                    (TODAY,))[0]["n"], 0)
 
     def test_25_attendance_percentage_formula(self):
@@ -200,15 +200,15 @@ class TestAttendance(BaseCase):
 class TestSmartFeatures(BaseCase):
     def test_30_low_attendance_warning_shown_only_when_below_threshold(self):
         low, high = self.app.test_client(), self.app.test_client()
-        self.login("MCA2613", "student123", low)       # about 55% attendance in demo data
-        self.login("MCA2611", "student123", high)      # about 97% attendance in demo data
+        self.login("25MCC20081", "student123", low)       # about 55% attendance in demo data
+        self.login("25MCC20067", "student123", high)      # about 97% attendance in demo data
         self.assertIn(b"Low attendance warning", low.get("/student/dashboard").data)
         self.assertNotIn(b"Low attendance warning", high.get("/student/dashboard").data)
 
     def test_31_students_at_risk_on_admin_dashboard(self):
         self.login("admin", "admin123")
         html = self.client.get("/admin/dashboard").data.decode()
-        self.assertIn("Manish Tiwari", html)           # low-attendance student is listed
+        self.assertIn("Pankaj Kumar", html)           # low-attendance student is listed
         self.assertIn("Students at Risk", html)
 
     def test_32_threshold_is_configurable(self):
@@ -236,7 +236,7 @@ class TestMarks(BaseCase):
         r = self.client.post("/teacher/marks", data=form, follow_redirects=True)
         self.assertIn(b"Saved marks for 1 student", r.data)
         stu = self.app.test_client()
-        self.login("MCA2601", "student123", stu)
+        self.login("25MCC20073", "student123", stu)
         page = stu.get("/student/performance").data.decode()
         self.assertIn("Quiz 2", page)
         self.assertIn("85.0%", page)
@@ -276,8 +276,8 @@ class TestReports(BaseCase):
         self.login("teacher1", "teacher123")
         r = self.client.get("/teacher/reports?export=csv")
         text = r.data.decode("utf-8-sig")
-        self.assertIn("PYT101", text)
-        self.assertNotIn("DSA104", text)                              # belongs to teacher2
+        self.assertIn("25CAH-733", text)
+        self.assertNotIn("25TDT-711", text)                              # belongs to teacher2
 
     def test_53_pdf_export(self):
         self.login("admin", "admin123")
@@ -293,7 +293,7 @@ class TestAllPagesLoad(BaseCase):
                                     "/admin/classes", "/admin/reports", "/admin/settings"],
             ("teacher1", "teacher123"): ["/teacher/dashboard", "/teacher/attendance", "/teacher/attendance/history",
                                          "/teacher/students", "/teacher/marks", "/teacher/reports"],
-            ("MCA2601", "student123"): ["/student/dashboard", "/student/attendance", "/student/performance", "/student/profile"],
+            ("25MCC20073", "student123"): ["/student/dashboard", "/student/attendance", "/student/performance", "/student/profile"],
         }
         for (user, pw), urls in pages.items():
             c = self.app.test_client()

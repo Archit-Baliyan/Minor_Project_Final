@@ -12,20 +12,79 @@ from werkzeug.security import generate_password_hash
 rnd = random.Random(2026)                      # fixed seed -> same data every time
 H = lambda pw: generate_password_hash(pw, method="pbkdf2:sha256")
 
-names = ["Aarav Sharma", "Priya Verma", "Rohan Gupta", "Ananya Singh", "Karan Mehta", "Neha Kapoor",
-         "Vikas Yadav", "Simran Kaur", "Aditya Rao", "Pooja Nair", "Rahul Chauhan", "Sneha Joshi",
-         "Manish Tiwari", "Divya Malik", "Harsh Vardhan", "Kavya Reddy", "Deepak Saini", "Ritika Bansal",
-         "Nikhil Arora", "Isha Pandey"]
+students_data = [
+    ("25MCC20073", "Divyanshu"),
+    ("25MCC20077", "Ishu Kaushal"),
+    ("25MCC20003", "Vansh"),
+    ("25MCC20020", "Ravi Ranjan Bhaker"),
+    ("25MCC20048", "Guddu Kumar"),
+    ("25MCC20057", "Abhishek"),
+    ("25MCC20078", "Shubham"),
+    ("25MCC20036", "Anuj Kumar"),
+    ("25MCC20056", "Aman Yadav"),
+    ("25MCC20064", "Gaurish"),
+    ("25MCC20067", "Aryan Prajapati"),
+    ("25MCC20013", "Archit Kumar"),
+    ("25MCC20081", "Pankaj Kumar"),
+    ("25MCC20050", "Ayush Preet"),
+    ("25MCC20005", "Ayush Ranjan"),
+    ("25MCC20007", "Rajdeep Maiti"),
+    ("25MCC20042", "Aradhya Sharma"),
+    ("25MCC20062", "Prateek Verma"),
+    ("25MCC20066", "Dheeraj Sharma"),
+    ("25MCC20088", "Gorachand Pradhan"),
+]
+
 # base attendance probability for each student (some deliberately low -> "at risk")
 base_p = [.96, .92, .88, .85, .94, .79, .72, .66, .91, .83, .97, .70, .62, .89, .77, .58, .93, .81, .74, .86]
 drift = [0, 0, 0, -.05, 0, .04, -.06, 0, 0, -.04, 0, .05, -.05, 0, 0, .06, 0, -.03, .04, 0]
 ability = [.90, .82, .75, .70, .88, .65, .55, .50, .85, .72, .92, .58, .48, .78, .68, .45, .87, .74, .60, .80]
 
-subjects = [(1, "PYT101", "Python Programming"), (2, "DBM102", "Database Management Systems"),
-            (3, "WEB103", "Web Technologies"), (4, "DSA104", "Data Structures and Algorithms"),
-            (5, "MAT105", "Discrete Mathematics")]
-weekdays = {1: {0, 2, 4}, 2: {1, 3, 4}, 3: {0, 1, 3}, 4: {0, 2, 3}, 5: {1, 2, 4}}   # Mon=0
-teacher_of = {1: 1, 2: 1, 3: 1, 4: 2, 5: 2}
+subjects = [
+    (1, "25CAH-733", "Cloud Virtualization"),
+    (2, "25CAP-732", "DevOps Lab"),
+    (3, "25CAT-731", "DevOps Theory"),
+    (4, "25CAT-737", "Cloud Security"),
+    (5, "25TDT-711", "Aptitude"),
+    (6, "25CAH-734", "Docker"),
+    (7, "25TDP-710", "Soft Skills"),
+    (8, "25CAP-707", "Technical Training"),
+]
+
+teachers_data = [
+    (1, 2, "TCH001", "Shah Dhruv Samir", "shah.dhruv.samir@college.example.com"),
+    (2, 3, "TCH002", "Amandeep Kaur", "amandeep.kaur@college.example.com"),
+    (3, 4, "TCH003", "Danish Rashid Pala", "danish.rashid.pala@college.example.com"),
+    (4, 5, "TCH004", "Manisha Nagpal", "manisha.nagpal@college.example.com"),
+    (5, 6, "TCH005", "Ankur Sharma", "ankur.sharma@college.example.com"),
+    (6, 7, "TCH006", "Sofia", "sofia@college.example.com"),
+    (7, 8, "TCH007", "Ajay", "ajay@college.example.com"),
+    (8, 9, "TCH008", "Sanjeev Kumar", "sanjeev.kumar@college.example.com"),
+]
+
+# 1-to-1 mapping: Subject ID -> Teacher ID
+teacher_of = {
+    1: 1,   # Cloud Virtualization -> Shah Dhruv Samir
+    2: 2,   # DevOps Lab -> Amandeep Kaur
+    3: 3,   # DevOps Theory -> Danish Rashid Pala
+    4: 4,   # Cloud Security -> Manisha Nagpal
+    5: 5,   # Aptitude -> Ankur Sharma
+    6: 6,   # Docker -> Sofia
+    7: 7,   # Soft Skills -> Ajay
+    8: 8,   # Technical Training -> Sanjeev Kumar
+}
+
+weekdays = {
+    1: {0, 2},     # Mon, Wed
+    2: {1, 3},     # Tue, Thu
+    3: {0, 4},     # Mon, Fri
+    4: {1, 4},     # Tue, Fri
+    5: {2, 4},     # Wed, Fri
+    6: {0, 3},     # Mon, Thu
+    7: {1, 2},     # Tue, Wed
+    8: {2, 3},     # Wed, Thu
+}
+
 holidays = {date(2026, 8, 14), date(2026, 9, 4)}
 start, end = date(2026, 7, 6), date(2026, 9, 23)
 
@@ -38,26 +97,31 @@ out.append("INSERT INTO classes (id, class_name, semester, section) VALUES (1, '
 out.append("INSERT INTO subjects (id, subject_code, subject_name) VALUES\n  " +
            ",\n  ".join(f"({i}, {q(c)}, {q(n)})" for i, c, n in subjects) + ";")
 
-users = [(1, "admin", H("admin123"), "admin"),
-         (2, "teacher1", H("teacher123"), "teacher"), (3, "teacher2", H("teacher123"), "teacher")]
-for i in range(20):
-    users.append((4 + i, f"MCA26{i + 1:02d}", H("student123"), "student"))
+users = [(1, "admin", H("admin123"), "admin")]
+for t_id, u_id, tch_code, t_name, t_email in teachers_data:
+    users.append((u_id, f"teacher{t_id}", H("teacher123"), "teacher"))
+
+student_start_uid = 10
+for i, (roll, name) in enumerate(students_data):
+    users.append((student_start_uid + i, roll, H("student123"), "student"))
 out.append("INSERT INTO users (id, username, password_hash, role) VALUES\n  " +
            ",\n  ".join(f"({i}, {q(u)}, {q(h)}, {q(r)})" for i, u, h, r in users) + ";")
 
-out.append("INSERT INTO teachers (id, user_id, teacher_id, name, email) VALUES\n"
-           "  (1, 2, 'TCH001', 'Dr. Anita Sharma', 'anita.sharma@college.example.com'),\n"
-           "  (2, 3, 'TCH002', 'Prof. Vikram Malhotra', 'vikram.malhotra@college.example.com');")
+teachers_sql = []
+for t_id, u_id, tch_code, t_name, t_email in teachers_data:
+    teachers_sql.append(f"({t_id}, {u_id}, {q(tch_code)}, {q(t_name)}, {q(t_email)})")
+out.append("INSERT INTO teachers (id, user_id, teacher_id, name, email) VALUES\n  " +
+           ",\n  ".join(teachers_sql) + ";")
 
 stu = []
-for i, n in enumerate(names):
-    email = n.lower().replace(" ", ".") + "@student.example.com"
-    stu.append(f"({i + 1}, {4 + i}, 'MCA26{i + 1:02d}', {q(n)}, {q(email)}, {1 if i < 10 else 2})")
+for i, (roll, name) in enumerate(students_data):
+    email = name.lower().replace(" ", ".") + "@student.example.com"
+    stu.append(f"({i + 1}, {student_start_uid + i}, {q(roll)}, {q(name)}, {q(email)}, {1 if i < 10 else 2})")
 out.append("INSERT INTO students (id, user_id, student_id, name, email, class_id) VALUES\n  " + ",\n  ".join(stu) + ";")
 
 ts, k = [], 1
 for cls in (1, 2):
-    for sid in range(1, 6):
+    for sid in range(1, 9):
         ts.append(f"({k}, {teacher_of[sid]}, {sid}, {cls})"); k += 1
 out.append("INSERT INTO teacher_subjects (id, teacher_id, subject_id, class_id) VALUES\n  " + ",\n  ".join(ts) + ";")
 
